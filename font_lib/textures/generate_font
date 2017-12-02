@@ -1,0 +1,74 @@
+#! /bin/bash
+# This program generates a bitmap font for font_lib mod for Minetest game.
+# (c) Andrzej Pieńkowski <pienkowski.andrzej@gmail.com>
+# License: MIT
+
+# no arguments
+if [[ $# == 0 ]]; then
+	echo -e "Usage: generate_font <path to font> <pointsize>\n\nDefault and recommended pointsize is 8.\nFor best results use a bitmap font designed to be used at a given pointsize.\n"
+	exit 1
+fi
+
+# check font
+if [ ! -f "$1" ]; then
+	echo "Error: Font file not found!"
+	exit 1
+else
+	fontPath="$1"
+fi
+
+# check pointsize
+re='^[0-9]+$'
+if [[ $# == 1 ]]; then
+	echo "Pointsize not given, assuming 8."
+	fontSize=8
+else
+	if ! [[ $2 =~ $re ]] ; then
+		echo "Error: given <pointsize> is not a number!"
+		exit 1
+	else
+		fontSize=$2
+	fi
+fi
+
+# check imagemagick
+hash mogrify &>/dev/null
+if [ $? -eq 1 ]; then
+	echo -e "Error: This program requires ImageMagick! Please install it by typing 'sudo apt-get install imagemagick' in terminal."
+	exit 1
+fi
+
+# generate normal characters
+# WARNING: Glyphs not existing in the given font will be rendered as question marks; no easy way to detect if a glyph exists.
+# Don't try to generate Unicode glyphs encoded in more than 2 bytes; not supported.
+# The set listed below contains: West European, East European, Greek, Turkish and Cyrillic plus some punctuation, currency and math
+set -f
+for i in 0 1 2 3 4 5 6 7 8 9 A a Ą ą B b C c Ć ć D d E e Ę ę F f G g H h I i J j K k L l Ł ł M m N n Ń ń O o Ó ó P p Q q R r S s Ś ś T t U u V v W w X x Y y Z z Ż ż Ź ź \+ \- \* \/ \= \% \! \? \@ \# \$ \^ \& \( \) \[ \] \{ \} \| \: \; \< \> \. \, \' \" \~ \_ ¡ ¢ £ ¤ ¥ € ¦ § ¨ © ª º « » ¬ ® ¯ ° ± ¹ ² ³ ´ µ ¶ · ¸ ¼ ½ ¾ ¿ ÷ × ∆ – — ― ‰ … „ ” “ ‘ ’ À Á Â Ã Ä Å Æ Ç È É Ê Ë Ì Í Î Ï Ð Ñ Ò Ó Ô Õ Ö Ø Ù Ú Û Ü Ý Þ ß à á â ã ä å æ ç è é ê ë ì í î ï ð ñ ò ó ô õ ö ø ù ú û ü ý þ ÿ Ă ă Č č Ď ď Đ đ Ě ě Ğ ğ İ Ĺ ĺ Ľ ľ Ň ň Ő ő Œ œ Ŕ ŕ Ř ř Ş ş Š š Ţ ţ Ť ť Ů ů Ű ű Ž ž Ÿ ΄ ΅ Ά · Έ Ή Ί Ό Ύ Ώ ΐ Α Β Γ Δ Ε Ζ Η Θ Ι Κ Λ Μ Ν Ξ Ο Π Ρ Σ Τ Υ Φ Χ Ψ Ω Ϊ Ϋ ά έ ή ί ΰ α β γ δ ε ζ η θ ι κ λ μ ν ξ ο π ρ ς σ τ υ φ χ ψ ω ϊ ϋ ό ύ ώ Ѐ Ё Ђ Ѓ Є Ѕ І Ї Ј Љ Њ Ћ Ќ Ѝ Ў Џ А Б В Г Д Е Ж З И Й К Л М Н О П Р С Т У Ф Х Ц Ч Ш Щ Ъ Ы Ь Э Ю Я а б в г д е ж з и й к л м н о п р с т у ф х ц ч ш щ ъ ы ь э ю я ѐ ё ђ ѓ є ѕ і ї ј љ њ ћ ќ ѝ ў џ; do
+	cStr=`echo "$i" | od -x -N 2 --endian=big | head -n 1 | awk '{print $2}'`
+	if [ "${cStr:2:2}" == "0a" ]; then cStr=00${cStr:0:2}; fi
+	echo $i $cStr
+	convert -background none -fill black -font "$fontPath" -pointsize $fontSize label:"$i" -colorspace gray font_lib_$cStr.png
+done
+
+# generate space, null and backlash characters
+if [ ! -f "font_lib_0030.png" ]; then
+	echo "Error: Something wrong happened! Font was not generated!"
+	exit 1
+else
+	fontHeight=$(identify font_lib_0030.png | awk '{print $3}' | awk -Fx '{print $2}')
+	if ! [[ $fontHeight =~ $re ]] ; then
+		echo "Error: Something wrong happened! Generated files might be broken!"
+		exit 1
+	else
+		convert -size 7x$fontHeight xc:transparent -colorspace gray font_lib_0020.png
+		convert -size 7x$fontHeight xc:transparent -colorspace gray -stroke black -fill transparent -draw "rectangle 0,2 4,$((fontSize))" -colorspace gray font_lib_0000.png
+		convert font_lib_002f.png -flop font_lib_005c.png
+	fi
+fi
+
+# shave characters a little
+for j in font_lib_*.png; do
+	mogrify -crop -2+0 +repage -crop +0-1 +repage -crop +0+1 +repage "$j"
+done
+
+

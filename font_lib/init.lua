@@ -21,7 +21,7 @@
 
 font_lib = {}
 font_lib.path = minetest.get_modpath("font_lib")
-font_lib.font_height = 12
+font_lib.font_height = 11
 font_lib.font = {}
 
 -- Local functions
@@ -30,14 +30,10 @@ local function get_next_char(text, pos)
 	pos = pos + 1
 	local char = text:sub(pos, pos):byte()
 	if char >= 0x80 then
-		if char == 0xc2 or char == 0xc3 then
-			pos = pos + 1
-			char = (char - 0xc2) * 0x40 + text:sub(pos, pos):byte()
-		else
-			char = 0
-		end
+		pos = pos + 1
+		char = char * 0x100 + text:sub(pos, pos):byte()
 	end
-	if font_lib.font[char] == nil then char=0 end
+	if font_lib.font[char] == nil then char = 0 end
 
 	return char, pos
 end
@@ -156,8 +152,9 @@ end
 -- Populate fonts table
 
 local filename
-for char = 0,255 do
-	filename = string.format("font_lib_%02x.png", char)
+print("[font_lib] Please wait, populating font table...")
+for char = 0,65535 do
+	filename = string.format("font_lib_%04x.png", char)
 	local file=io.open(font_lib.path.."/textures/"..filename,"rb")
 	if file~=nil then 
 		-- Get png width, suposing png width is less than 256 (it is the case for all font textures)
