@@ -1,5 +1,7 @@
 # Display Modpack
 
+_For changes in this fork please look further below._
+
 This modpack provides mods with dynamic display. Mods are :
 
 - **display_lib**: A library for adding display entities to nodes;
@@ -12,6 +14,12 @@ This modpack provides mods with dynamic display. Mods are :
 For more information, see the [forum topic](https://forum.minetest.net/viewtopic.php?f=11&t=13563) at the Minetest forums.
 
 ## Changelog
+
+### 2017-12-02 Fork
+
+- Added support for Unicode characters (limited to Unicode Plane 0: 0000-FFFF, see [Wikipedia](https://en.wikipedia.org/wiki/Unicode); Warning: all textures have changed names! Textures from original repository are not compatible!
+- Added new, more readable character textures for languages: Western European, Eastern European (incl. Polish), Cyrillic, Turkish, Greek. Fonts used: [Grixel Kyrou 7 Wide](https://www.dafont.com/grixel-kyrou-7-wide.font) by Nikos Giannakopoulos (CC BY-ND), [Pokemon Classic](https://www.dafont.com/pokemon-classic.font) by TheLouster115, credits to Sarial84 on DeviantART for the Cyrillic alphabet (CC BY-NC-SA).
+- Added a Bash script to generate any characters from any font.
 
 ### 2017-08-26
 
